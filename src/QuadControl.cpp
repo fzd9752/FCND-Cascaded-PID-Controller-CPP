@@ -69,11 +69,45 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
   // You'll need the arm length parameter L, and the drag/thrust ratio kappa
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+//  Apply the equations:
+//  F = k_f * omega^2
+//  tau = k_m * omega^2
+//  k_m / k_f = tau / F
+//  kappa = k_m / kf_, tau = kappa * F
+//  F = F1 + F2 + F3 + F4
+//  tau_x = (F1 - F2 - F3 + F4) * l
+//  tau_y = (F1 + F2 - F3 - F4) * l
+//  tau_z = tau_1 + tau_2 + tau_3 + tau_4 = F/kappa
+    
+  float d_perp = L / sqrt(2);
 
-  cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
-  cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
-  cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
-  cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
+/*
+ Organise above equations, get:
+    /            \  /    \    /               \
+    | 1, 1, 1, 1 |  | F1 |    | C             |
+    | 1,-1, 1,-1 |  | F2 |  = | tau_x/d_perp  |
+    | 1, 1,-1,-1 |  | F3 |    | tau_y/d_perp  |
+    |-1, 1, 1,-1 |  | F4 |    | F/kappa       |
+    \            /  \    /    \               /
+
+ Solution:
+      /    \       /            \   /              \
+      | F1 |       | 1  1  1 -1 |   | C            |
+      | F2 | = 1/4 | 1 -1  1  1 |   | tau_x/d_perp |
+      | F3 |       | 1  1 -1  1 |   | tau_y/d_perp |
+      | F4 |       | 1 -1 -1 -1 |   | F/kappa      |
+      \    /       \            /   \              /
+*/
+  
+  float Mx = momentCmd.x/d_perp;
+  float My = momentCmd.y/d_perp;
+  float Mz = momentCmd.z/kappa;
+    
+  // Limit thrust in motot physical ability
+  cmd.desiredThrustsN[0] = CONSTRAIN((collThrustCmd + Mx + My - Mz)/4.f, minMotorThrust, maxMotorThrust); // front left
+  cmd.desiredThrustsN[1] = CONSTRAIN((collThrustCmd - Mx + My + Mz)/4.f, minMotorThrust, maxMotorThrust); // front right
+  cmd.desiredThrustsN[2] = CONSTRAIN((collThrustCmd + Mx - My + Mz)/4.f, minMotorThrust, maxMotorThrust); // rear left
+  cmd.desiredThrustsN[3] = CONSTRAIN((collThrustCmd - Mx - My - Mz)/4.f, minMotorThrust, maxMotorThrust); // rear right
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
