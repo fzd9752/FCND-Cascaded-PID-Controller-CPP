@@ -10,7 +10,7 @@ The controller follows the architecture as below:
 
 ![](animations/CascadedController.png)
 
-PID parameters locates in the file [config/QuadControlParams.txt](config/QuadControlParams.txt). The controller code is in the [src/QuadContrl.cpp](src/QuadContrl.cpp), where:
+PID parameters locates in the file [config/QuadControlParams.txt](config/QuadControlParams.txt). The controller code is in the [src/QuadControlParams.cpp](src/QuadContrl.cpp), where:
 
 - `GenerateMotorCommands()` - convert quad moment to desired thrust commands for each motor. This part relies on the Vehicle Dynamics。
 
